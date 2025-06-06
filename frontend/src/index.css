@@ -1,4 +1,22 @@
-body {
-  margin: 0;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  }
+}
+
+@layer components {
+  .input {
+    @apply px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+           bg-white dark:bg-gray-800 text-gray-900 dark:text-white;
+  }
+  
+  .button {
+    @apply px-4 py-2 bg-primary-light dark:bg-primary-dark text-white rounded-md
+           hover:opacity-90 transition-opacity;
+  }
 } 

@@ -18,6 +18,7 @@ import os
 from datetime import date
 from pathlib import Path
 from typing import Final, Iterable
+import urllib.parse
 
 import httpx
 from tqdm.asyncio import tqdm_asyncio
@@ -27,9 +28,12 @@ from tqdm.asyncio import tqdm_asyncio
 # ---------------------------------------------------------------------------
 START: Final[date] = date(2014, 1, 1)
 END: Final[date] = date(2024, 12, 1)  # inclusive
-BASE_URL: Final[str] = (
-    "https://transtats.bts.gov/PREZIP/On_Time_Reporting_Carrier_On_Time_Performance_(1987_present)"
-)
+_BASE_STEM = "https://transtats.bts.gov/PREZIP/On_Time_Reporting_Carrier_On_Time_Performance_"
+# Encode the parentheses so we don't rely on the server accepting raw "("/ ")".
+# The resulting string ends with "1987_present" (no trailing underscore).
+BASE_URL_ENCODED: Final[str] = _BASE_STEM + urllib.parse.quote("(1987_present)")
+# Some files are hosted without the parentheses.  Keep both variants for robust download.
+BASE_URL_RAW: Final[str] = _BASE_STEM + "1987_present"
 DEST_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "data" / "raw"
 CONCURRENT_CONNECTIONS: Final[int] = 8  # tune as needed
 RETRIES: Final[int] = 3
@@ -55,7 +59,7 @@ def months_between(start: date, end: date) -> Iterable[tuple[int, int]]:
 
 def build_url(year: int, month: int) -> str:
     """Return BTS download URL for a given *year* and *month* (1-12)."""
-    return f"{BASE_URL}_{year}_{month}.zip"
+    return f"{BASE_URL_ENCODED}_{year}_{month}.zip"
 
 
 def build_path(year: int, month: int) -> Path:
@@ -82,8 +86,14 @@ async def download_single(
                 dest.write_bytes(resp.content)
                 return  # success
             except Exception as exc:  # noqa: BLE001
+                # On first failure, if we were using the ENCODED variant, fall back once to RAW.
+                if url.startswith(BASE_URL_ENCODED):
+                    url = url.replace(BASE_URL_ENCODED, BASE_URL_RAW)
+                    continue  # retry immediately with RAW form
+
                 if attempt == RETRIES:
                     raise RuntimeError(f"Failed after {RETRIES} attempts: {url}") from exc
+
                 await asyncio.sleep(2**attempt)  # exponential back-off
 
 

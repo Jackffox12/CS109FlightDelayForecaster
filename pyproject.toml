@@ -3,6 +3,7 @@ name = "flight_delay_forecaster"
 version = "0.1.0"
 description = "Real-time Bayesian flight delay forecaster"
 authors = ["Your Name <you@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -22,11 +23,19 @@ streamlit-extras = "^0.3.3"
 pytest = "^8.1.0"
 jupyter = "^1.0.0"
 tqdm = "^4.66.4"
+alembic = "^1.16.1"
+pyarrow = "^20.0.0"
+seaborn = "^0.13.2"
+apscheduler = "^3.11.0"
+requests = "^2.32.3"
+redis = ">=5.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
 ruff = "^0.4.0"
 pre-commit = "^3.6.0"
+pytest = "^8.4.0"
+pytest-asyncio = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.4.0"]
