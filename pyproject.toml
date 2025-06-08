@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "flight_delay_bayes"
+version = "0.1.0"
+description = "Bayesian flight delay forecasting"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "flight_delay_bayes" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+duckdb = "^0.10.0"
+pandas = ">=2.2"
+httpx = "^0.27.0"
+python-dotenv = "^1.0.1"
+rich = "^13.7.0"
+typer = "^0.12.3"
+scipy = "^1.13.0"
+tqdm = "^4.66.2"
+ruff = "^0.4.3"
+kaggle = "^1.6.12"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+hypothesis = "^6.100.1"
+ipykernel = "^6.29.3"
+black = "^24.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double" 
