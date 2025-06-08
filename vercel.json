@@ -2,11 +2,6 @@
   "buildCommand": "cd webapp && npm run build",
   "outputDirectory": "webapp/dist",
   "installCommand": "cd webapp && npm install",
-  "functions": {
-    "api/*.py": {
-      "runtime": "@vercel/python@3.9"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
