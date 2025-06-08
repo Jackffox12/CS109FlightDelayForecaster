@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/bayes/pipeline.py
+# hypothesis_version: 6.135.1
+
+[1.0, 'active', 'alpha', 'beta', 'carrier', 'delay_minutes', 'dest', 'flight_num', 'forecast_probability', 'landed', 'origin', 'p_late', 'scheduled_dep', 'status', 'updated']

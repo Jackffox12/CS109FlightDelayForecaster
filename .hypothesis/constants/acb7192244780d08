@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/api/main.py
+# hypothesis_version: 6.135.1
+
+[400, 500, '*', '+00:00', '/health', 'Z', 'alpha', 'beta', 'carrier', 'dest', 'flight_num', 'ok', 'origin', 'p_late', 'pred_dep_local', 'sched_dep_local', 'scheduled_dep', 'updated']

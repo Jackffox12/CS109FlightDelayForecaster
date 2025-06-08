@@ -1,0 +1,7 @@
+# .ruff.toml  — minimal, no pydocstyle
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I"]          # no "D"
+ignore = ["E501", "E402"]
