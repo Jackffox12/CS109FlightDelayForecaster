@@ -1,21 +1,16 @@
 {
-  "version": 2,
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/webapp/dist/$1"
-    }
-  ],
-  "installCommand": "cd webapp && npm install",
   "buildCommand": "cd webapp && npm run build",
   "outputDirectory": "webapp/dist",
+  "installCommand": "cd webapp && npm install",
   "functions": {
     "api/*.py": {
       "runtime": "python3.9"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
 } 
