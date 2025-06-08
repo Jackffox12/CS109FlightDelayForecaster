@@ -1,9 +1,12 @@
 """flight_delay_bayes CLI module."""
 import click
 from pathlib import Path
+from datetime import datetime
+import asyncio
 
 from .ingestion.bts_ingest import ingest_historic_data
 from .bayes.prior_estimator import compute_beta_prior
+from flight_delay_bayes.bayes.pipeline import forecast_probability
 
 
 @click.group()
@@ -48,6 +51,32 @@ def estimate_prior(carrier: str, origin: str, dest: str, db_path: Path) -> None:
     """Estimate Beta prior parameters for a route and print them."""
     alpha, beta, n = compute_beta_prior(carrier, origin, dest, db_path)
     click.echo(f"α={alpha}, β={beta}, n={n}")
+
+
+@cli.command("predict")
+@click.option("--flight", required=True, help="Flight as IATA+number, e.g. DL202")
+@click.option("--date", "dep_date", required=True, help="Departure date YYYY-MM-DD")
+def predict(flight: str, dep_date: str) -> None:  # noqa: D401
+    """Predict probability of flight being late (>15 min)."""
+    match = __import__("re").match(r"^([A-Za-z]+)(\d+)$", flight)
+    if not match:
+        click.echo("--flight must be like DL202", err=True)
+        raise click.Abort()
+    carrier, number = match.group(1).upper(), match.group(2)
+    try:
+        date_obj = datetime.strptime(dep_date, "%Y-%m-%d").date()
+    except ValueError:
+        click.echo("--date must be YYYY-MM-DD", err=True)
+        raise click.Abort()
+
+    try:
+        result = asyncio.run(forecast_probability(carrier, number, date_obj))
+        click.echo(
+            f"P(late)={result['p_late']:.3f} | alpha={result['alpha']:.2f} | beta={result['beta']:.2f} | updated={result['updated']}"
+        )
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
 
 
 if __name__ == "__main__":  # pragma: no cover

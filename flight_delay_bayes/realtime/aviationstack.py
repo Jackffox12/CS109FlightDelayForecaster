@@ -71,6 +71,8 @@ async def _get_status_async(
         "gate": flight_info.get("departure", {}).get("gate"),
         "status": flight_info.get("flight_status"),
         "delay_minutes": flight_info.get("departure", {}).get("delay"),
+        "origin": flight_info.get("departure", {}).get("iata"),
+        "dest": flight_info.get("arrival", {}).get("iata"),
     }
     return result
 
