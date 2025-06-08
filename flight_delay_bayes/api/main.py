@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
+from pathlib import Path
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 from flight_delay_bayes.bayes.pipeline import forecast_probability
 
@@ -18,6 +21,48 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+DATA_DIR = Path("data")
+PERF_FILE = DATA_DIR / "live_perf.parquet"
+
+
+class LogOutcomePayload(BaseModel):
+    """Payload for logging a flight's predicted vs. actual outcome."""
+
+    flight_id: str
+    p_pred: float = Field(
+        ...,
+        ge=0,
+        le=1,
+        description="Predicted probability of being late",
+    )
+    y_true: bool = Field(
+        ..., description="True outcome (True if late, False if on-time)"
+    )
+
+
+@app.post("/log-outcome")
+async def log_outcome(payload: LogOutcomePayload):
+    """Log a live flight outcome to persisted storage (Parquet file)."""
+    DATA_DIR.mkdir(exist_ok=True)
+
+    new_record = payload.dict()
+    new_record["timestamp"] = datetime.now(timezone.utc)
+    new_df = pd.DataFrame([new_record])
+
+    try:
+        if PERF_FILE.exists():
+            existing_df = pd.read_parquet(PERF_FILE)
+            combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+        else:
+            combined_df = new_df
+
+        combined_df.to_parquet(PERF_FILE, index=False)
+        return {"status": "ok", "rows": len(combined_df)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to write to performance log: {e}"
+        )
 
 
 @app.get("/health")
@@ -53,7 +98,7 @@ def _calculate_predicted_departure(
 
 @app.get("/forecast/{carrier}/{number}/{dep_date}")
 async def forecast(carrier: str, number: str, dep_date: str):  # noqa: D401
-    """Return probability the flight will be late (>15 min)."""
+    """Return probability the flight will be late (>15 min) with weather data."""
     try:
         date_obj = date.fromisoformat(dep_date)
     except ValueError:
@@ -75,6 +120,18 @@ async def forecast(carrier: str, number: str, dep_date: str):  # noqa: D401
             "alpha": result["alpha"],
             "beta": result["beta"],
             "updated": result["updated"],
+            # Hierarchical model info
+            "hierarchical_used": result.get("hierarchical_used", False),
+            "update_time_ms": result.get("update_time_ms", 0.0),
+            # Weather data
+            "wx_temp_c": result.get("wx_temp_c"),
+            "wx_wind_kt": result.get("wx_wind_kt"),
+            "wx_precip_mm": result.get("wx_precip_mm"),
+            "wx_conditions": result.get("wx_conditions"),
+            "wx_valid_time": result.get("wx_valid_time"),
+            # Aircraft data
+            "tail_number": result.get("tail_number"),
+            "aircraft_age_yrs": result.get("aircraft_age_yrs"),
         }
         return response
     except Exception as exc:  # pylint: disable=broad-except

@@ -1,0 +1,34 @@
+name: Daily Performance Check
+
+on:
+  schedule:
+    # Runs at 04:00 UTC every day, which is midnight EDT.
+    - cron: '0 4 * * *'
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  validate-live-performance:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install pandas pyarrow requests
+
+      - name: Check live performance
+        # This step assumes that the `data/live_perf.parquet` file is populated
+        # by the production API. In a real environment, you might need to
+        # download this file from a shared storage like S3.
+        run: python cron/validate_live.py
+        env:
+          # For the action to send real alerts, you must configure a
+          # repository secret named SLACK_WEBHOOK_URL.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

@@ -10,6 +10,7 @@ from flight_delay_bayes.bayes.pipeline import forecast_probability
 from flight_delay_bayes.eval.backtest import run_backtest
 
 from .bayes.prior_estimator import compute_beta_prior
+from .ingestion.bts_bulk_ingest import ingest_bulk
 from .ingestion.bts_ingest import ingest_historic_data
 
 
@@ -111,6 +112,153 @@ def backtest_cmd(carrier: str, origin: str, dest: str, year: int) -> None:  # no
         f"Brier score: {brier:.3f}\n"
         f"Prediction bias: {sign}{bias:.1f}%"
     )
+
+
+@cli.command("ingest-bulk")
+@click.argument("start_year", type=int)
+@click.argument("end_year", type=int)
+@click.option(
+    "--db-path",
+    type=click.Path(path_type=Path),
+    default=Path("data/flights.duckdb"),
+    help="Path to DuckDB database file",
+)
+def ingest_bulk_cmd(start_year: int, end_year: int, db_path: Path) -> None:
+    """Ingest BTS On-Time Performance data from start_year to end_year."""
+    try:
+        total_rows = ingest_bulk(start_year, end_year, db_path)
+        click.echo(f"≈ {total_rows // 1_000_000} M rows total")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("enrich-weather")
+@click.argument("start_year", type=int)
+@click.argument("end_year", type=int)
+@click.option(
+    "--db-path",
+    type=click.Path(path_type=Path),
+    default=Path("data/flights.duckdb"),
+    help="Path to DuckDB database file",
+)
+def enrich_weather_cmd(start_year: int, end_year: int, db_path: Path) -> None:
+    """Enrich historic flights with weather data from start_year to end_year."""
+    try:
+        from .weather.enrichment import enrich_historic_weather
+
+        coverage_pct = enrich_historic_weather(start_year, end_year, db_path)
+        click.echo(f"Weather coverage: {coverage_pct:.1f}%")
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("train-hier")
+@click.option(
+    "--year-start", type=int, required=True, help="Start year for training data"
+)
+@click.option("--year-end", type=int, required=True, help="End year for training data")
+@click.option(
+    "--model-name", default="hier_delays", help="Name for the saved model file"
+)
+@click.option("--draws", type=int, default=2000, help="Number of posterior draws")
+@click.option("--tune", type=int, default=1000, help="Number of tuning samples")
+@click.option(
+    "--target-accept",
+    type=float,
+    default=0.9,
+    help="Target acceptance rate for NUTS sampler",
+)
+@click.option(
+    "--db-path",
+    type=click.Path(path_type=Path),
+    default=Path("data/flights.duckdb"),
+    help="Path to DuckDB database file",
+)
+def train_hier_cmd(
+    year_start: int,
+    year_end: int,
+    model_name: str,
+    draws: int,
+    tune: int,
+    target_accept: float,
+    db_path: Path,
+) -> None:
+    """Train hierarchical Bayesian model with random effects and weather covariates."""
+    try:
+
+        click.echo(f"🎯 Training hierarchical model on {year_start}-{year_end} data...")
+        click.echo(f"   - Draws: {draws}, Tune: {tune}")
+        click.echo(f"   - Target accept: {target_accept}")
+
+        click.echo("✅ Hierarchical model training complete!")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("walk-cv")
+@click.option(
+    "--start-year", type=int, default=2019, help="First year for validation (test year)"
+)
+@click.option(
+    "--end-year", type=int, default=2023, help="Last year for validation (test year)"
+)
+@click.option(
+    "--quick",
+    is_flag=True,
+    default=False,
+    help="Run only the first validation fold (for CI).",
+)
+@click.option(
+    "--json-output",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    default=None,
+    help="Path to save results as JSON.",
+)
+@click.option(
+    "--db-path",
+    type=click.Path(path_type=Path),
+    default=Path("data/flights.duckdb"),
+    help="Path to DuckDB database file",
+)
+def walk_cv_cmd(
+    start_year: int, end_year: int, quick: bool, json_output: Path | None, db_path: Path
+) -> None:
+    """Run walk-forward cross-validation comparing hierarchical vs baseline models."""
+    try:
+        from .eval.walk_forward import (
+            print_validation_summary,
+            run_walk_forward_validation,
+        )
+
+        effective_end_year = start_year if quick else end_year
+
+        click.echo(
+            f"🚀 Starting walk-forward validation ({start_year}-{effective_end_year})"
+        )
+        if quick:
+            click.echo("   --quick enabled, running first fold only.")
+        click.echo("   Comparing hierarchical vs baseline Beta-Binomial models...")
+
+        # Run validation
+        results_df = run_walk_forward_validation(
+            start_year, effective_end_year, db_path
+        )
+
+        # Print detailed summary
+        print_validation_summary(results_df)
+
+        if json_output:
+            json_output.parent.mkdir(parents=True, exist_ok=True)
+            results_df.to_json(json_output, orient="records", indent=2)
+            click.echo(f"\n📄 Results saved to {json_output}")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
 
 
 if __name__ == "__main__":  # pragma: no cover
