@@ -11,6 +11,8 @@ import kaggle
 import pandas as pd
 from tqdm import tqdm
 
+from flight_delay_bayes.bayes.updater import BetaBinomialModel
+
 # Required columns from the BTS dataset
 REQUIRED_COLUMNS = [
     "FL_DATE",
@@ -184,4 +186,11 @@ def ingest_historic_data(csv_dir: Path | str, db_path: Path | str) -> int:
     total_rows = load_csv_files(csv_dir, db_path)
     
     print(f"Wrote {total_rows:,} rows to {db_path}:historic_flights")
-    return total_rows 
+    return total_rows
+
+
+m = BetaBinomialModel(0.5, 0.5)
+print(m)                       # BetaBinomialModel(alpha=0.500, beta=0.500)
+m.update(1)                    # observe late
+print(m.predictive_p_on_time())
+print(m.predictive_cdf(k=2, n=10)) 
