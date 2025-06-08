@@ -45,8 +45,18 @@ export default function App() {
       const carrier = requestedId.slice(0, 2)
       const number = requestedId.slice(2)
       
-      // Use environment variable for API URL, fallback to localhost for development
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      // Use environment variable for API URL, auto-detect for production
+      let apiUrl = import.meta.env.VITE_API_URL
+      
+      // If no explicit API URL is set, auto-detect based on current location
+      if (!apiUrl) {
+        if (window.location.hostname === 'localhost') {
+          apiUrl = 'http://localhost:8000'
+        } else {
+          // Use same domain for production (Vercel deployment)
+          apiUrl = window.location.origin
+        }
+      }
       
       const { data } = await axios.get<ForecastResp>(
         `${apiUrl}/api/forecast/${carrier}/${number}/${today}`
