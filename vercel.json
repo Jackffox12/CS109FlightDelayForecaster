@@ -24,7 +24,6 @@
     }
   ],
   "installCommand": "cd webapp && npm install",
-  "buildCommand": "cd webapp && npm run build",
   "outputDirectory": "webapp/dist",
   "functions": {
     "api/*.py": {
