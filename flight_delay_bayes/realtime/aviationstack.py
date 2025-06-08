@@ -1,4 +1,5 @@
 """Realtime flight status retrieval via the Aviationstack API."""
+
 from __future__ import annotations
 
 import asyncio
@@ -27,7 +28,9 @@ class AviationstackError(RuntimeError):
     """Raised when a call to Aviationstack fails after retries."""
 
 
-async def _fetch_with_retry(url: str, params: dict[str, Any]) -> httpx.Response:  # noqa: D401
+async def _fetch_with_retry(
+    url: str, params: dict[str, Any]
+) -> httpx.Response:  # noqa: D401
     """Perform GET with simple exponential back-off retries."""
     async with httpx.AsyncClient(timeout=TIMEOUT_S) as client:
         delay = 0.5
@@ -41,7 +44,9 @@ async def _fetch_with_retry(url: str, params: dict[str, Any]) -> httpx.Response:
                 return resp
             except (httpx.HTTPError, httpx.TimeoutException):
                 if attempt == MAX_RETRIES:
-                    raise AviationstackError("Aviationstack API request failed after retries")
+                    raise AviationstackError(
+                        "Aviationstack API request failed after retries"
+                    )
                 continue
 
 
@@ -50,7 +55,9 @@ async def _get_status_async(
 ) -> dict[str, Any]:  # noqa: D401
     key = os.getenv("AVIATIONSTACK_KEY")
     if not key:
-        raise RuntimeError("AVIATIONSTACK_KEY environment variable not set. See .env.example.")
+        raise RuntimeError(
+            "AVIATIONSTACK_KEY environment variable not set. See .env.example."
+        )
 
     params: dict[str, Any] = {
         "access_key": key,
@@ -77,10 +84,12 @@ async def _get_status_async(
     return result
 
 
-def get_flight_status(carrier_code: str, flight_number: str, dep_date: date) -> dict[str, Any]:  # noqa: D401
+def get_flight_status(
+    carrier_code: str, flight_number: str, dep_date: date
+) -> dict[str, Any]:  # noqa: D401
     """Return current flight status information from Aviationstack.
 
     This is a thin synchronous wrapper around an async HTTP call for ease of
     use from synchronous code paths.
     """
-    return asyncio.run(_get_status_async(carrier_code, flight_number, dep_date)) 
+    return asyncio.run(_get_status_async(carrier_code, flight_number, dep_date))

@@ -1,4 +1,5 @@
 """Retrieve the latest METAR observation for a given ICAO station."""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,7 +10,9 @@ import httpx
 
 __all__ = ["latest_metar"]
 
-FEED_URL: Final[str] = "https://tgftp.nws.noaa.gov/data/observations/metar/stations/{icao}.TXT"
+FEED_URL: Final[str] = (
+    "https://tgftp.nws.noaa.gov/data/observations/metar/stations/{icao}.TXT"
+)
 TIMEOUT_S: Final[float] = 5.0
 MAX_RETRIES: Final[int] = 3
 BACKOFF: Final[float] = 1.5
@@ -47,7 +50,9 @@ def _parse_metar_text(text: str) -> dict[str, Any]:  # noqa: D401
 
     # Observation time format: YYYY/MM/DD HH:MM
     try:
-        obs_dt = datetime.strptime(obs_time_str, "%Y/%m/%d %H:%M").replace(tzinfo=timezone.utc)
+        obs_dt = datetime.strptime(obs_time_str, "%Y/%m/%d %H:%M").replace(
+            tzinfo=timezone.utc
+        )
     except ValueError as exc:
         raise MetarError("Invalid observation time in METAR feed") from exc
 
@@ -89,4 +94,4 @@ def latest_metar(icao: str) -> dict[str, Any]:  # noqa: D401
 
     Synchronous wrapper around async implementation.
     """
-    return asyncio.run(_latest_metar_async(icao)) 
+    return asyncio.run(_latest_metar_async(icao))

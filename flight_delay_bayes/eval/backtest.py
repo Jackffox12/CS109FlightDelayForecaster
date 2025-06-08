@@ -1,9 +1,8 @@
 """Backtesting utility for historic flight probability forecasts."""
+
 from __future__ import annotations
 
-from collections import defaultdict
 from pathlib import Path
-from typing import Tuple
 
 import duckdb
 import numpy as np
@@ -21,7 +20,7 @@ def _fetch_flights(
     db_path = Path(db_path)
     if not db_path.exists():
         return []
-    
+
     query = (
         "SELECT flight_date, late FROM historic_flights "
         "WHERE carrier = ? AND origin = ? AND dest = ? AND strftime('%Y', flight_date) = ? "
@@ -97,4 +96,4 @@ def run_backtest(
         "brier": bs,
         "bias": bias,
         "buckets": buckets,
-    } 
+    }

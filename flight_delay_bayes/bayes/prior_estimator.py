@@ -1,8 +1,8 @@
 """Bayesian prior estimation utilities."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Tuple
 
 import duckdb
 
@@ -53,6 +53,7 @@ def compute_beta_prior(
     alpha, beta, n
         The alpha and beta parameters for the Beta prior, and the number of
         matched rows.
+
     """
     db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
 
@@ -75,4 +76,4 @@ def compute_beta_prior(
     beta0 = 0.5
     alpha = alpha0 + k
     beta = beta0 + (n - k)
-    return alpha, beta, n 
+    return alpha, beta, n

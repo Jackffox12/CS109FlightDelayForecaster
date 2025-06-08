@@ -3,13 +3,11 @@
 This module provides the BetaBinomialModel class, which supports sequential
 updates given late/on-time observations and exposes predictive utilities.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import fsum
-from pathlib import Path
 
-from rich.pretty import Pretty
 from scipy.stats import betabinom
 
 __all__ = ["BetaBinomialModel"]
@@ -24,6 +22,7 @@ class BetaBinomialModel:
     alpha, beta
         Strictly positive shape parameters for the Beta prior. ``alpha`` counts
         late flights; ``beta`` counts on-time flights.
+
     """
 
     alpha: float
@@ -43,6 +42,7 @@ class BetaBinomialModel:
         ----------
         observation
             ``1`` = late flight, ``0`` = on-time flight.
+
         """
         if observation not in (0, 1):
             raise ValueError("observation must be 0 (on-time) or 1 (late)")
@@ -81,4 +81,4 @@ class BetaBinomialModel:
         yield "mean_on_time", round(self.predictive_p_on_time(), 4)
 
     def __repr__(self) -> str:  # noqa: D401
-        return f"BetaBinomialModel(alpha={self.alpha:.3f}, beta={self.beta:.3f})" 
+        return f"BetaBinomialModel(alpha={self.alpha:.3f}, beta={self.beta:.3f})"

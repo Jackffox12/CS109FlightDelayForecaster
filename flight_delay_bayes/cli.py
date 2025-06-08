@@ -1,13 +1,16 @@
 """flight_delay_bayes CLI module."""
-import click
-from pathlib import Path
-from datetime import datetime
-import asyncio
 
-from .ingestion.bts_ingest import ingest_historic_data
-from .bayes.prior_estimator import compute_beta_prior
+import asyncio
+from datetime import datetime
+from pathlib import Path
+
+import click
+
 from flight_delay_bayes.bayes.pipeline import forecast_probability
 from flight_delay_bayes.eval.backtest import run_backtest
+
+from .bayes.prior_estimator import compute_beta_prior
+from .ingestion.bts_ingest import ingest_historic_data
 
 
 @click.group()
@@ -20,13 +23,13 @@ def cli() -> None:
     "--csv-dir",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     required=True,
-    help="Directory containing CSV files to ingest"
+    help="Directory containing CSV files to ingest",
 )
 @click.option(
-    "--db-path", 
+    "--db-path",
     type=click.Path(path_type=Path),
     default=Path("data/flights.duckdb"),
-    help="Path to DuckDB database file"
+    help="Path to DuckDB database file",
 )
 def ingest_historic(csv_dir: Path, db_path: Path) -> None:
     """Ingest historic flight data from CSV files into DuckDB."""
@@ -48,7 +51,9 @@ def ingest_historic(csv_dir: Path, db_path: Path) -> None:
     default=Path("data/flights.duckdb"),
     help="Path to DuckDB database file",
 )
-def estimate_prior(carrier: str, origin: str, dest: str, db_path: Path) -> None:  # noqa: D401
+def estimate_prior(
+    carrier: str, origin: str, dest: str, db_path: Path
+) -> None:  # noqa: D401
     """Estimate Beta prior parameters for a route and print them."""
     alpha, beta, n = compute_beta_prior(carrier, origin, dest, db_path)
     click.echo(f"α={alpha}, β={beta}, n={n}")
@@ -109,4 +114,4 @@ def backtest_cmd(carrier: str, origin: str, dest: str, year: int) -> None:  # no
 
 
 if __name__ == "__main__":  # pragma: no cover
-    cli() 
+    cli()
