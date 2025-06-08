@@ -7,6 +7,7 @@ import asyncio
 from .ingestion.bts_ingest import ingest_historic_data
 from .bayes.prior_estimator import compute_beta_prior
 from flight_delay_bayes.bayes.pipeline import forecast_probability
+from flight_delay_bayes.eval.backtest import run_backtest
 
 
 @click.group()
@@ -77,6 +78,34 @@ def predict(flight: str, dep_date: str) -> None:  # noqa: D401
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise click.Abort()
+
+
+@cli.command("backtest")
+@click.option("--carrier", required=True)
+@click.option("--origin", required=True)
+@click.option("--dest", required=True)
+@click.option("--year", type=int, required=True)
+def backtest_cmd(carrier: str, origin: str, dest: str, year: int) -> None:  # noqa: D401
+    """Run backtest for given route and year."""
+    try:
+        metrics = run_backtest(carrier.upper(), origin.upper(), dest.upper(), year)
+    except Exception as e:  # noqa: BLE001
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+    n = metrics["n"]
+    actual = metrics["actual_rate"] * 100
+    mean_pred = metrics["mean_pred"] * 100
+    brier = metrics["brier"]
+    bias = metrics["bias"] * 100
+    sign = "+" if bias >= 0 else ""
+    click.echo(
+        f"Number of flights: {n}\n"
+        f"Actual late rate: {actual:.1f}%\n"
+        f"Mean predicted probability: {mean_pred:.1f}%\n"
+        f"Brier score: {brier:.3f}\n"
+        f"Prediction bias: {sign}{bias:.1f}%"
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover
