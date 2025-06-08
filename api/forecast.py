@@ -3,38 +3,77 @@
 import asyncio
 import json
 import os
-import sys
-from datetime import date
+import random
+from datetime import date, datetime, timedelta
 from http.server import BaseHTTPRequestHandler
-from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-# Add the project root to Python path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Mock flight routes for demonstration
+DEMO_ROUTES = {
+    "DL": {
+        "202": {"origin": "JFK", "dest": "ATH"},
+        "1": {"origin": "JFK", "dest": "LAX"},
+        "88": {"origin": "ATL", "dest": "LAX"},
+    },
+    "AA": {
+        "1": {"origin": "JFK", "dest": "LAX"},
+        "100": {"origin": "DFW", "dest": "LAX"},
+    },
+    "UA": {
+        "1": {"origin": "EWR", "dest": "SFO"},
+        "328": {"origin": "ORD", "dest": "SFO"},
+    },
+}
 
-try:
-    from flight_delay_bayes.bayes.pipeline import forecast_probability
-except ImportError:
-    # Fallback for simplified deployment
-    async def forecast_probability(carrier, flight_num, dep_date):
-        return {
-            "carrier": carrier,
-            "flight_num": flight_num,
-            "origin": "JFK",
-            "dest": "LAX",
-            "scheduled_dep": "2025-01-15T10:30:00-05:00",
-            "pred_dep_local": "2025-01-15T10:35:00-05:00",
-            "p_late": 0.42,
-            "p_late_30": 0.31,
-            "p_late_45": 0.22,
-            "p_late_60": 0.15,
-            "exp_delay_min": 5.2,
-            "alpha": 12.5,
-            "beta": 17.3,
-            "updated": True,
-            "hierarchical_used": False,
-            "update_time_ms": 0.0,
-        }
+
+async def forecast_probability(carrier, flight_num, dep_date):
+    """Mock forecast for Vercel deployment (no ML dependencies)."""
+    # Get route info or use defaults
+    route = DEMO_ROUTES.get(carrier, {}).get(
+        flight_num, {"origin": "JFK", "dest": "LAX"}
+    )
+
+    # Generate realistic mock data with some randomness
+    random.seed(hash(f"{carrier}{flight_num}{dep_date}"))  # Consistent for same input
+
+    base_delay_prob = 0.15 + random.random() * 0.4  # 15-55%
+
+    # Create realistic threshold probabilities (decreasing)
+    p_late_30 = base_delay_prob * (0.6 + random.random() * 0.2)  # 60-80% of base
+    p_late_45 = p_late_30 * (0.6 + random.random() * 0.2)  # 60-80% of 30min
+    p_late_60 = p_late_45 * (0.5 + random.random() * 0.3)  # 50-80% of 45min
+
+    exp_delay = 2 + base_delay_prob * 25  # 2-15 minutes expected delay
+
+    # Create scheduled departure (8 hours from now for demo)
+    scheduled_dt = datetime.now() + timedelta(hours=8)
+    pred_dt = scheduled_dt + timedelta(minutes=exp_delay)
+
+    return {
+        "carrier": carrier,
+        "flight_num": flight_num,
+        "origin": route["origin"],
+        "dest": route["dest"],
+        "scheduled_dep": scheduled_dt.isoformat() + "Z",
+        "pred_dep_local": pred_dt.isoformat() + "Z",
+        "p_late": round(base_delay_prob, 3),
+        "p_late_30": round(p_late_30, 3),
+        "p_late_45": round(p_late_45, 3),
+        "p_late_60": round(p_late_60, 3),
+        "exp_delay_min": round(exp_delay, 1),
+        "alpha": 12.5 + random.random() * 10,
+        "beta": 17.3 + random.random() * 15,
+        "updated": True,
+        "hierarchical_used": False,
+        "update_time_ms": random.random() * 100,
+        "wx_temp_c": 15 + random.random() * 20,
+        "wx_wind_kt": random.random() * 25,
+        "wx_precip_mm": random.random() * 5 if random.random() > 0.7 else 0,
+        "wx_conditions": random.choice(
+            ["Clear", "Partly Cloudy", "Cloudy", "Light Rain"]
+        ),
+        "status": "scheduled",
+    }
 
 
 class handler(BaseHTTPRequestHandler):
