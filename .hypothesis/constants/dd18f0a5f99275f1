@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/bayes/delay_curve.py
+# hypothesis_version: 6.135.1
+
+[0.0, 0.1, 0.5, 0.8, 1.0, 20.0, 25.0, 80.0, 100, 2022, 2023, 'DelayPredictor', 'data/flights.duckdb', 'data_years', 'default', 'delay_curve.json', 'dep_delay_minutes', 'late', 'late_pct', 'load_delay_curve', 'mean', 'mean_late_delay', 'mean_ontime_delay', 'models', 'n_flights', 'ontime_pct', 'prob_bin', 'r', 'threshold_prob', 'w']

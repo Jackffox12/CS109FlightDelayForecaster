@@ -57,11 +57,11 @@ export function FlightGlobe({ origin, dest }: Props) {
   }
 
   return (
-    <div className="h-[70vh] md:h-[75vh] w-full flex items-center justify-center">
+    <div className="h-[50vh] w-full flex items-center justify-center">
       <Globe
         ref={globeRef}
-        width={800}
-        height={600}
+        width={700}
+        height={400}
         
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         backgroundColor="rgba(0,0,0,0)"

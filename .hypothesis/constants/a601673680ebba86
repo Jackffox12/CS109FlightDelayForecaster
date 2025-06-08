@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/bayes/hier_online.py
+# hypothesis_version: 6.135.1
+
+[0.0, 0.5, 1.0, 1.1, 1.15, 1.2, 1000, 'Intercept', '__len__', 'advi', 'base_model_path', 'baseline_prob', 'carrier', 'chain', 'dep_hour', 'dest', 'draw', 'intercept', 'intercept_mean', 'intercept_std', 'last_update_time_ms', 'late', 'offset', 'origin', 'route', 'wx_precip_mm', 'wx_temp_c', 'wx_wind_kt']

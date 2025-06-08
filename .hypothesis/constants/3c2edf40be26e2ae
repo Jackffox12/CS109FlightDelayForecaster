@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/realtime/noaa_gridpoint.py
+# hypothesis_version: 6.135.1
+
+[0.1, 0.868976, 10.0, 999, '+00:00', '0 mph', 'User-Agent', 'Z', 'conditions', 'forecast', 'forecastHourly', 'forecast_hourly_url', 'forecast_url', 'gridId', 'gridX', 'gridY', 'gridpoint', 'periods', 'precip_mm', 'properties', 'shortForecast', 'startTime', 'temp_c', 'temperature', 'valid_time', 'value', 'windSpeed', 'wind_kt', 'wx_conditions', 'wx_precip_mm', 'wx_temp_c', 'wx_valid_time', 'wx_wind_kt']

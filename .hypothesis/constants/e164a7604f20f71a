@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/bayes/hier_model.py
+# hypothesis_version: 6.135.1
+
+[0.0, 0.9, 1000, 1024, 2000, ' + (1|route)', ' + carrier', ' + dep_hour', ' + dest', ' + origin', '.nc', ':', 'Intercept', 'bernoulli', 'carrier', 'coerce', 'data/flights.duckdb', 'dep_hour', 'dest', 'fitted', 'hier_delays', 'late', 'late ~ 1', 'model_family', 'model_formula', 'models', 'origin', 'rb', 'response', 'route', 'trace_path', 'wb', 'wx_precip_mm', 'wx_temp_c', 'wx_wind_kt', '📊 Model summary:']

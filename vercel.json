@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "webapp/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/webapp/dist/$1"
+    }
+  ],
+  "installCommand": "cd webapp && npm install",
+  "buildCommand": "cd webapp && npm run build",
+  "outputDirectory": "webapp/dist",
+  "functions": {
+    "api/*.py": {
+      "runtime": "python3.9"
+    }
+  }
+} 

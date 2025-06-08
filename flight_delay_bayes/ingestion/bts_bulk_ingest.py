@@ -41,6 +41,7 @@ NEEDED_COLS = {
     "DEST": "dest",
     "CRS_DEP_TIME": "crs_dep_time",
     "DEP_DEL15": "dep_del15",
+    "DEP_DELAY": "dep_delay_minutes",
     "CANCELLED": "cancelled",
 }
 
@@ -70,6 +71,7 @@ def _ensure_table(conn: duckdb.DuckDBPyConnection) -> None:
             origin      VARCHAR,
             dest        VARCHAR,
             dep_hour    INTEGER,
+            dep_delay_minutes REAL,
             late        BOOLEAN,
             year        INTEGER
         )
@@ -87,11 +89,23 @@ def _process_frame(df: pd.DataFrame) -> pd.DataFrame:
     df["dep_hour"] = (df["crs_dep_time"] // 100).astype("Int64")
 
     df["dep_del15"] = pd.to_numeric(df["dep_del15"], errors="coerce")
+    df["dep_delay_minutes"] = pd.to_numeric(df["dep_delay_minutes"], errors="coerce")
     df["cancelled"] = pd.to_numeric(df["cancelled"], errors="coerce")
     df["late"] = (df["dep_del15"] == 1) & (df["cancelled"] == 0)
 
     df["year"] = df["flight_date"].dt.year
-    return df[["flight_date", "carrier", "origin", "dest", "dep_hour", "late", "year"]]
+    return df[
+        [
+            "flight_date",
+            "carrier",
+            "origin",
+            "dest",
+            "dep_hour",
+            "dep_delay_minutes",
+            "late",
+            "year",
+        ]
+    ]
 
 
 def ingest_bulk(

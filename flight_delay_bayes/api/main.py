@@ -71,31 +71,6 @@ def health() -> dict[str, bool]:
     return {"ok": True}
 
 
-def _calculate_predicted_departure(
-    scheduled_dep: str | None, p_late: float
-) -> str | None:
-    """Calculate predicted departure time from scheduled time and delay probability."""
-    if not scheduled_dep:
-        return None
-
-    try:
-        # Parse the scheduled departure time
-        sched_dt = datetime.fromisoformat(scheduled_dep.replace("Z", "+00:00"))
-
-        # Calculate expected delay in minutes (simple: p_late * 60)
-        predicted_delay_minutes = int(p_late * 60)
-
-        # Add delay to scheduled time
-        from datetime import timedelta
-
-        pred_dt = sched_dt + timedelta(minutes=predicted_delay_minutes)
-
-        # Return in ISO format
-        return pred_dt.isoformat()
-    except (ValueError, TypeError):
-        return None
-
-
 @app.get("/forecast/{carrier}/{number}/{dep_date}")
 async def forecast(carrier: str, number: str, dep_date: str):  # noqa: D401
     """Return probability the flight will be late (>15 min) with weather data."""
@@ -113,10 +88,12 @@ async def forecast(carrier: str, number: str, dep_date: str):  # noqa: D401
             "origin": result["origin"],
             "dest": result["dest"],
             "sched_dep_local": result["scheduled_dep"],
-            "pred_dep_local": _calculate_predicted_departure(
-                result["scheduled_dep"], result["p_late"]
-            ),
+            "pred_dep_local": result["pred_dep_local"],
             "p_late": result["p_late"],
+            "p_late_30": result["p_late_30"],
+            "p_late_45": result["p_late_45"],
+            "p_late_60": result["p_late_60"],
+            "exp_delay_min": result["exp_delay_min"],
             "alpha": result["alpha"],
             "beta": result["beta"],
             "updated": result["updated"],

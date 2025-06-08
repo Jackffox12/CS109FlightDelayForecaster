@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/realtime/aviationstack.py
+# hypothesis_version: 6.135.1
+
+[0.5, 1.5, 5.0, 'AVIATIONSTACK_KEY', 'access_key', 'airline_iata', 'arrival', 'data', 'delay', 'delay_minutes', 'departure', 'dest', 'flight_date', 'flight_number', 'flight_status', 'gate', 'get_flight_status', 'iata', 'origin', 'scheduled', 'scheduled_dep', 'status']

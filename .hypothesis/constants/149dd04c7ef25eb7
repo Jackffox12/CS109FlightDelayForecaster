@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/bayes/prior_estimator.py
+# hypothesis_version: 6.135.1
+
+[0.5, 'data/flights.duckdb']

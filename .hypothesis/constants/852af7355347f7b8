@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/eval/walk_forward.py
+# hypothesis_version: 6.135.1
+
+[0.0, 1e-15, 0.125, 0.5, 0.8, 0.85, 1.0, 10.0, 100, 250, 500, 2019, 2023, '\n📋 Per-Fold Results:', '-', '=', 'WalkForwardValidator', 'auc', 'baseline_auc', 'baseline_brier', 'baseline_ece', 'baseline_log_loss', 'baseline_time', 'brier', 'brier_improvement', 'carrier', 'data/flights.duckdb', 'dest', 'ece', 'flight_date', 'hier_auc', 'hier_brier', 'hier_ece', 'hier_log_loss', 'hier_time', 'hier_wins', 'late', 'log_loss', 'origin', 'test_size', 'test_year', 'train_end', 'train_size', 'train_start', '📈 Base', '🧠 Hier']

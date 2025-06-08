@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/bayes/updater.py
+# hypothesis_version: 6.135.1
+
+['BetaBinomialModel', 'Require 0 ≤ k ≤ n', 'alpha', 'beta', 'mean_late', 'mean_on_time']

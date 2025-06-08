@@ -1,0 +1,9 @@
+{
+  "mean_ontime_delay": 0.5,
+  "mean_late_delay": 28.4,
+  "threshold_prob": 0.35,
+  "data_years": "2022-2023",
+  "n_flights": 100000,
+  "ontime_pct": 78.2,
+  "late_pct": 21.8
+} 

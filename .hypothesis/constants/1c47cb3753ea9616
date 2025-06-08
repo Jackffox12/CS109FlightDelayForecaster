@@ -1,0 +1,4 @@
+# file: /Users/jackffox/Desktop/CS109FlightDelayForecaster/flight_delay_bayes/api/main.py
+# hypothesis_version: 6.135.1
+
+[0.0, 400, 500, '*', '/health', '/log-outcome', 'aircraft_age_yrs', 'alpha', 'beta', 'carrier', 'data', 'dest', 'exp_delay_min', 'flight_num', 'hierarchical_used', 'live_perf.parquet', 'ok', 'origin', 'p_late', 'pred_dep_local', 'rows', 'sched_dep_local', 'scheduled_dep', 'status', 'tail_number', 'timestamp', 'update_time_ms', 'updated', 'wx_conditions', 'wx_precip_mm', 'wx_temp_c', 'wx_valid_time', 'wx_wind_kt']

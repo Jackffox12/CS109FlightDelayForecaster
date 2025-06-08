@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from flight_delay_bayes.bayes.delay_curve import (
+    DelayPredictor,
+    create_default_delay_curve,
+    load_delay_curve,
+)
 from flight_delay_bayes.bayes.hier_online import OnlineHierarchicalUpdater
 from flight_delay_bayes.bayes.prior_estimator import compute_beta_prior
 from flight_delay_bayes.bayes.updater import BetaBinomialModel
@@ -53,6 +58,9 @@ DEFAULT_HIER_MODEL = Path("models/hier_delays_2023_2023_2023.pkl")
 
 # Global online updater instance (initialized lazily)
 _online_updater: Optional["OnlineHierarchicalUpdater"] = None
+
+# Global delay predictor instance (initialized lazily)
+_delay_predictor: Optional["DelayPredictor"] = None
 
 __all__ = ["forecast_probability"]
 
@@ -113,6 +121,22 @@ def _get_online_updater() -> Optional["OnlineHierarchicalUpdater"]:
     return _online_updater
 
 
+def _get_delay_predictor() -> "DelayPredictor":
+    """Get or create the global delay predictor instance."""
+    global _delay_predictor
+
+    if _delay_predictor is None:
+        try:
+            _delay_predictor = load_delay_curve()
+            print("📈 Loaded delay curve from models/delay_curve.json")
+        except FileNotFoundError:
+            print("⚠️  No delay curve found, using default parameters")
+            default_curve = create_default_delay_curve()
+            _delay_predictor = DelayPredictor(default_curve)
+
+    return _delay_predictor
+
+
 def _extract_dep_hour(scheduled_dep_str: str) -> Optional[int]:
     """Extract departure hour from scheduled departure string."""
     if not scheduled_dep_str:
@@ -124,6 +148,27 @@ def _extract_dep_hour(scheduled_dep_str: str) -> Optional[int]:
         )
         return scheduled_dep_dt.hour
     except ValueError:
+        return None
+
+
+def _calculate_predicted_departure(
+    scheduled_dep_str: str | None, exp_delay_min: float
+) -> str | None:
+    """Calculate predicted departure time from scheduled time and expected delay."""
+    if not scheduled_dep_str:
+        return None
+
+    try:
+        # Parse the scheduled departure time
+        sched_dt = datetime.fromisoformat(scheduled_dep_str.replace("Z", "+00:00"))
+
+        # Add expected delay (ensure it's not negative)
+        delay_minutes = max(0, exp_delay_min)
+        pred_dt = sched_dt + timedelta(minutes=delay_minutes)
+
+        # Return in ISO format
+        return pred_dt.isoformat()
+    except (ValueError, TypeError):
         return None
 
 
@@ -251,10 +296,25 @@ async def forecast_probability(
         beta_result = 1.0
         updated_result = hier_updated
 
-    # 5. Prepare result ------------------------------------------------------
+    # 5. Calculate expected delay and predicted departure time ---------------
+    delay_predictor = _get_delay_predictor()
+    exp_delay_min = delay_predictor.predict_delay(p_late)
+    pred_dep_local = _calculate_predicted_departure(
+        status_info.get("scheduled_dep"), exp_delay_min
+    )
+
+    # 6. Calculate multiple delay threshold probabilities --------------------
+    threshold_probs = delay_predictor.predict_threshold_probabilities(p_late)
+
+    # 7. Prepare result ------------------------------------------------------
 
     result = {
-        "p_late": p_late,
+        "p_late": p_late,  # Keep existing for backward compatibility
+        "p_late_30": threshold_probs["p_late_30"],
+        "p_late_45": threshold_probs["p_late_45"],
+        "p_late_60": threshold_probs["p_late_60"],
+        "exp_delay_min": round(exp_delay_min, 1),
+        "pred_dep_local": pred_dep_local,
         "alpha": alpha_result,
         "beta": beta_result,
         "updated": updated_result,

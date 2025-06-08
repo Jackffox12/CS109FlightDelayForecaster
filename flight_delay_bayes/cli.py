@@ -261,5 +261,43 @@ def walk_cv_cmd(
         raise click.Abort()
 
 
+@cli.command("build-delay-curve")
+@click.option(
+    "--start-year", type=int, default=2022, help="Start year for delay curve analysis"
+)
+@click.option(
+    "--end-year", type=int, default=2023, help="End year for delay curve analysis"
+)
+@click.option(
+    "--db-path",
+    type=click.Path(path_type=Path),
+    default=Path("data/flights.duckdb"),
+    help="Path to DuckDB database file",
+)
+def build_delay_curve_cmd(start_year: int, end_year: int, db_path: Path) -> None:
+    """Build data-driven delay curve from historical flight data."""
+    try:
+        from .bayes.delay_curve import calculate_delay_curve, save_delay_curve
+
+        click.echo(f"🕰️  Building delay curve from {start_year}-{end_year} data...")
+
+        # Calculate delay curve
+        curve_data = calculate_delay_curve(start_year, end_year, db_path)
+
+        # Save to models directory
+        save_delay_curve(curve_data)
+
+        click.echo("✅ Delay curve built successfully!")
+        click.echo(
+            f"   Mean on-time delay: {curve_data['mean_ontime_delay']:.1f} minutes"
+        )
+        click.echo(f"   Mean late delay: {curve_data['mean_late_delay']:.1f} minutes")
+        click.echo(f"   Threshold probability: {curve_data['threshold_prob']:.3f}")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
 if __name__ == "__main__":  # pragma: no cover
     cli()

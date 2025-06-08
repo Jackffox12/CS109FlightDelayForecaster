@@ -1,0 +1,10 @@
+# Core dependencies for Vercel deployment
+httpx==0.27.0
+pandas==2.0.3
+numpy==1.24.3
+scipy==1.11.1
+python-dotenv==1.0.0
+
+# Simplified dependencies (removing heavy ML libraries for serverless)
+# Note: For full functionality, you may need to use Vercel's edge functions
+# or deploy the ML models separately 
