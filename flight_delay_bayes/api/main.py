@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -71,8 +71,14 @@ def health() -> dict[str, bool]:
     return {"ok": True}
 
 
-@app.get("/forecast/{carrier}/{number}/{dep_date}")
-async def forecast(carrier: str, number: str, dep_date: str):  # noqa: D401
+@app.get("/forecast")
+async def forecast(
+    carrier: str = Query(..., description="Airline carrier code (e.g., DL)"),
+    number: str = Query(..., description="Flight number (e.g., 202)"),
+    dep_date: str = Query(
+        ..., description="Departure date in YYYY-MM-DD format", alias="date"
+    ),
+):
     """Return probability the flight will be late (>15 min) with weather data."""
     try:
         date_obj = date.fromisoformat(dep_date)

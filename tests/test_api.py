@@ -18,7 +18,7 @@ def test_health_endpoint():
 def test_forecast_endpoint_response_structure():
     """Test that forecast endpoint returns all required fields."""
     # This test may fail if external APIs are unavailable, but it tests the structure
-    response = client.get("/forecast/DL/202/2025-06-07")
+    response = client.get("/forecast?carrier=DL&number=202&date=2025-06-07")
 
     # The response should be either successful or have a specific error
     if response.status_code == 200:
@@ -92,6 +92,21 @@ def test_forecast_endpoint_response_structure():
 
 def test_forecast_endpoint_invalid_date():
     """Test forecast endpoint with invalid date format."""
-    response = client.get("/forecast/DL/202/invalid-date")
+    response = client.get("/forecast?carrier=DL&number=202&date=invalid-date")
     assert response.status_code == 400
     assert "Date must be YYYY-MM-DD" in response.json()["detail"]
+
+
+def test_forecast_endpoint_missing_parameters():
+    """Test forecast endpoint with missing required parameters."""
+    # Missing carrier
+    response = client.get("/forecast?number=202&date=2025-06-07")
+    assert response.status_code == 422  # FastAPI validation error
+
+    # Missing number
+    response = client.get("/forecast?carrier=DL&date=2025-06-07")
+    assert response.status_code == 422
+
+    # Missing date
+    response = client.get("/forecast?carrier=DL&number=202")
+    assert response.status_code == 422
