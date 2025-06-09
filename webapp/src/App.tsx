@@ -45,9 +45,9 @@ export default function App() {
       const carrier = requestedId.slice(0, 2)
       const number = requestedId.slice(2)
       
-      // Simple API path - works with Vite proxy in dev and Vercel functions in prod
+      // Use query parameters for better Vercel compatibility
       const { data } = await axios.get<ForecastResp>(
-        `/api/forecast/${carrier}/${number}/${today}`
+        `/api/forecast?carrier=${carrier}&number=${number}&date=${today}`
       )
       return data
     },
