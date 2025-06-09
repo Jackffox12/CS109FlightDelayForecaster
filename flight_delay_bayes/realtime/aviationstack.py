@@ -70,7 +70,21 @@ async def _get_status_async(
     data = resp.json()
 
     if "data" not in data or not data["data"]:
-        raise AviationstackError("No data returned from Aviationstack API.")
+        # Provide more helpful error message
+        from datetime import date as date_mod
+
+        today = date_mod.today()
+        if dep_date > today:
+            raise AviationstackError(
+                f"No flight data found for {carrier_code}{flight_number} on {dep_date}. "
+                f"Aviationstack typically only has data for past/current flights. "
+                f"Try using a recent past date (e.g., {today.replace(day=max(1, today.day-7))})."
+            )
+        else:
+            raise AviationstackError(
+                f"No flight data found for {carrier_code}{flight_number} on {dep_date}. "
+                f"Flight may not exist or may be cancelled. Try a different flight or date."
+            )
 
     flight_info = data["data"][0]  # take first match
     result = {
