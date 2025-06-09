@@ -84,7 +84,8 @@ class handler(BaseHTTPRequestHandler):
             # Debug: log the actual path received
             print(f"DEBUG: Received path: '{self.path}'")
 
-            # Parse URL - Vercel will pass the path after /api/forecast/
+            # For Vercel dynamic routing, the path will be something like:
+            # /DL/202/2025-06-08 (without /api/forecast prefix)
             path = self.path.strip("/")
             print(f"DEBUG: Stripped path: '{path}'")
 
@@ -93,7 +94,7 @@ class handler(BaseHTTPRequestHandler):
                 path = path.split("?")[0]
                 print(f"DEBUG: Path after query removal: '{path}'")
 
-            # Split by remaining path segments
+            # Split by path segments
             path_parts = path.split("/") if path else []
             print(f"DEBUG: Path parts: {path_parts}")
 
