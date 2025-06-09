@@ -13,10 +13,4 @@ export default defineConfig({
       },
     },
   },
-  define: {
-    // This allows us to use environment variables in the frontend
-    'import.meta.env.VITE_API_BASE': JSON.stringify(
-      process.env.NODE_ENV === 'production' ? '' : '/api'
-    ),
-  },
 })
