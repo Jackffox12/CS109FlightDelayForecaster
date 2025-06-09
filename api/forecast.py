@@ -1,8 +1,7 @@
-"""Vercel serverless function for flight delay forecasting."""
+"""Flight forecast endpoint for Vercel deployment."""
 
 import asyncio
 import json
-import os
 import random
 from datetime import date, datetime, timedelta
 from http.server import BaseHTTPRequestHandler
@@ -81,24 +80,21 @@ class handler(BaseHTTPRequestHandler):
         self.send_cors_headers()
 
         try:
-            # Parse query parameters instead of path
+            # Parse query parameters
             parsed_url = urlparse(self.path)
             query_params = parse_qs(parsed_url.query)
 
             print(f"DEBUG: Full path: '{self.path}'")
             print(f"DEBUG: Query params: {query_params}")
 
-            # Get parameters from query string
+            # Get parameters - support both query params and path segments
             carrier = query_params.get("carrier", [None])[0]
             flight_number = query_params.get("number", [None])[0]
             date_str = query_params.get("date", [None])[0]
 
-            # If query params are missing, try path parsing as fallback
+            # If query params missing, try path parsing
             if not all([carrier, flight_number, date_str]):
-                # Try path parsing as fallback
                 path = parsed_url.path.strip("/")
-                print(f"DEBUG: Trying path fallback: '{path}'")
-
                 path_parts = path.split("/") if path else []
                 print(f"DEBUG: Path parts: {path_parts}")
 
@@ -109,15 +105,12 @@ class handler(BaseHTTPRequestHandler):
                 else:
                     self.send_error_response(
                         400,
-                        f"Missing parameters. Use: /api/forecast?carrier=DL&number=202&date=2025-06-08 OR /api/forecast/DL/202/2025-06-08. Received: {self.path}",
+                        f"Use: /api/forecast?carrier=DL&number=202&date=2025-06-08 OR /api/forecast/DL/202/2025-06-08. Got: {self.path}",
                     )
                     return
 
-            # Validate required parameters
             if not all([carrier, flight_number, date_str]):
-                self.send_error_response(
-                    400, "Missing required parameters: carrier, number, date"
-                )
+                self.send_error_response(400, "Missing required parameters")
                 return
 
             carrier = carrier.upper()
@@ -132,7 +125,7 @@ class handler(BaseHTTPRequestHandler):
             # Get forecast
             result = asyncio.run(forecast_probability(carrier, flight_number, dep_date))
 
-            # Format response
+            # Format response to match expected structure
             response_data = {
                 "carrier": result["carrier"],
                 "flight_num": result["flight_num"],
@@ -162,13 +155,11 @@ class handler(BaseHTTPRequestHandler):
             self.send_json_response(200, response_data)
 
         except Exception as e:
-            print(f"DEBUG: Exception occurred: {e}")
+            print(f"DEBUG: Exception: {e}")
             self.send_error_response(500, str(e))
 
     def do_OPTIONS(self):
         self.send_cors_headers()
-        self.send_response(200)
-        self.end_headers()
 
     def send_cors_headers(self):
         self.send_response(200)
