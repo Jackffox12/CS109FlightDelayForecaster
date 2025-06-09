@@ -35,10 +35,11 @@ export default function App() {
   const [loadingCoords, setLoadingCoords] = useState(false)
   const [showDelayDetails, setShowDelayDetails] = useState(false)
 
-  const today = dayjs().format('YYYY-MM-DD')
+  // Use a recent past date since Aviationstack only has data for past flights
+  const defaultDate = dayjs().subtract(7, 'days').format('YYYY-MM-DD')
 
   const forecastQuery = useQuery<ForecastResp, Error>({
-    queryKey: ['forecast', requestedId, today],
+    queryKey: ['forecast', requestedId, defaultDate],
     enabled: false,
     queryFn: async () => {
       if (!requestedId) throw new Error('No flight')
@@ -47,7 +48,7 @@ export default function App() {
       
       // Use query parameters for better Vercel compatibility
       const { data } = await axios.get<ForecastResp>(
-        `/api/forecast?carrier=${carrier}&number=${number}&date=${today}`
+        `/api/forecast?carrier=${carrier}&number=${number}&date=${defaultDate}`
       )
       return data
     },
