@@ -81,19 +81,26 @@ class handler(BaseHTTPRequestHandler):
         self.send_cors_headers()
 
         try:
+            # Debug: log the actual path received
+            print(f"DEBUG: Received path: '{self.path}'")
+
             # Parse URL - Vercel will pass the path after /api/forecast/
             path = self.path.strip("/")
+            print(f"DEBUG: Stripped path: '{path}'")
 
             # Handle both direct and query parameter formats
             if "?" in path:
                 path = path.split("?")[0]
+                print(f"DEBUG: Path after query removal: '{path}'")
 
             # Split by remaining path segments
             path_parts = path.split("/") if path else []
+            print(f"DEBUG: Path parts: {path_parts}")
 
             if len(path_parts) < 3:
                 self.send_error_response(
-                    400, "Invalid URL format. Expected: {carrier}/{number}/{date}"
+                    400,
+                    f"Invalid URL format. Expected: {{carrier}}/{{number}}/{{date}}. Received path: '{self.path}', parts: {path_parts}",
                 )
                 return
 
@@ -141,6 +148,7 @@ class handler(BaseHTTPRequestHandler):
             self.send_json_response(200, response_data)
 
         except Exception as e:
+            print(f"DEBUG: Exception occurred: {e}")
             self.send_error_response(500, str(e))
 
     def do_OPTIONS(self):
