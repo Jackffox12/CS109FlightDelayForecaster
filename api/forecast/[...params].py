@@ -81,33 +81,46 @@ class handler(BaseHTTPRequestHandler):
         self.send_cors_headers()
 
         try:
-            # Debug: log the actual path received
-            print(f"DEBUG: Received path: '{self.path}'")
+            # Parse query parameters instead of path
+            parsed_url = urlparse(self.path)
+            query_params = parse_qs(parsed_url.query)
 
-            # For Vercel dynamic routing, the path will be something like:
-            # /DL/202/2025-06-08 (without /api/forecast prefix)
-            path = self.path.strip("/")
-            print(f"DEBUG: Stripped path: '{path}'")
+            print(f"DEBUG: Full path: '{self.path}'")
+            print(f"DEBUG: Query params: {query_params}")
 
-            # Handle both direct and query parameter formats
-            if "?" in path:
-                path = path.split("?")[0]
-                print(f"DEBUG: Path after query removal: '{path}'")
+            # Get parameters from query string
+            carrier = query_params.get("carrier", [None])[0]
+            flight_number = query_params.get("number", [None])[0]
+            date_str = query_params.get("date", [None])[0]
 
-            # Split by path segments
-            path_parts = path.split("/") if path else []
-            print(f"DEBUG: Path parts: {path_parts}")
+            # If query params are missing, try path parsing as fallback
+            if not all([carrier, flight_number, date_str]):
+                # Try path parsing as fallback
+                path = parsed_url.path.strip("/")
+                print(f"DEBUG: Trying path fallback: '{path}'")
 
-            if len(path_parts) < 3:
+                path_parts = path.split("/") if path else []
+                print(f"DEBUG: Path parts: {path_parts}")
+
+                if len(path_parts) >= 3:
+                    carrier = path_parts[0].upper()
+                    flight_number = path_parts[1]
+                    date_str = path_parts[2]
+                else:
+                    self.send_error_response(
+                        400,
+                        f"Missing parameters. Use: /api/forecast?carrier=DL&number=202&date=2025-06-08 OR /api/forecast/DL/202/2025-06-08. Received: {self.path}",
+                    )
+                    return
+
+            # Validate required parameters
+            if not all([carrier, flight_number, date_str]):
                 self.send_error_response(
-                    400,
-                    f"Invalid URL format. Expected: {{carrier}}/{{number}}/{{date}}. Received path: '{self.path}', parts: {path_parts}",
+                    400, "Missing required parameters: carrier, number, date"
                 )
                 return
 
-            carrier = path_parts[0].upper()
-            flight_number = path_parts[1]
-            date_str = path_parts[2]
+            carrier = carrier.upper()
 
             # Validate date format
             try:
