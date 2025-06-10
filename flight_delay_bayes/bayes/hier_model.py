@@ -229,10 +229,10 @@ class HierarchicalDelayModel:
         return df_clean
 
     def _get_dynamic_formula(self, df: pd.DataFrame) -> str:
-        """Build formula dynamically based on data variability."""
+        """Build formula dynamically based on data variability and enhanced features."""
         base_formula = "late ~ 1"
 
-        # Check variability of categorical variables
+        # Core categorical variables
         if df["carrier"].nunique() > 1:
             base_formula += " + carrier"
         if df["origin"].nunique() > 1:
@@ -240,19 +240,72 @@ class HierarchicalDelayModel:
         if df["dest"].nunique() > 1:
             base_formula += " + dest"
 
-        # Check variability of numeric variables
+        # Time-based features
         if df["dep_hour"].nunique() > 1:
             base_formula += " + dep_hour"
 
-        # Add weather variables if they have variation
+        # Enhanced temporal features (if available)
+        if "month" in df.columns and df["month"].nunique() > 1:
+            base_formula += " + month"
+        if "day_of_week" in df.columns and df["day_of_week"].nunique() > 1:
+            base_formula += " + day_of_week"
+        if "is_weekend" in df.columns:
+            base_formula += " + is_weekend"
+        if "quarter" in df.columns and df["quarter"].nunique() > 1:
+            base_formula += " + quarter"
+
+        # Cyclical encoding (continuous variables)
+        cyclical_vars = ["month_sin", "month_cos", "dow_sin", "dow_cos"]
+        for var in cyclical_vars:
+            if var in df.columns and df[var].std() > 0:
+                base_formula += f" + {var}"
+
+        # Seasonal indicators
+        seasonal_vars = ["is_holiday_season", "is_summer_season"]
+        for var in seasonal_vars:
+            if var in df.columns:
+                base_formula += f" + {var}"
+
+        # Route and airport features
+        if "time_category" in df.columns and df["time_category"].nunique() > 1:
+            base_formula += " + time_category"
+        if "route_complexity" in df.columns and df["route_complexity"].nunique() > 1:
+            base_formula += " + route_complexity"
+        if "origin_congestion" in df.columns and df["origin_congestion"].nunique() > 1:
+            base_formula += " + origin_congestion"
+        if "dest_congestion" in df.columns and df["dest_congestion"].nunique() > 1:
+            base_formula += " + dest_congestion"
+
+        # Weather variables (if they have variation)
         weather_cols = ["wx_temp_c", "wx_wind_kt", "wx_precip_mm"]
         for col in weather_cols:
             if col in df.columns and df[col].std() > 0:
                 base_formula += f" + {col}"
 
-        # Add random effects if we have multiple routes
-        if df["route"].nunique() > 1:
+        # Interaction terms (for better modeling)
+        # Only add if we have sufficient data
+        if len(df) > 1000:
+            if all(col in df.columns for col in ["carrier", "origin_congestion"]):
+                if (
+                    df["carrier"].nunique() > 1
+                    and df["origin_congestion"].nunique() > 1
+                ):
+                    base_formula += " + carrier:origin_congestion"
+
+            if all(col in df.columns for col in ["time_category", "route_complexity"]):
+                if (
+                    df["time_category"].nunique() > 1
+                    and df["route_complexity"].nunique() > 1
+                ):
+                    base_formula += " + time_category:route_complexity"
+
+        # Random effects for routes (if we have multiple routes)
+        if "route" in df.columns and df["route"].nunique() > 1:
             base_formula += " + (1|route)"
+
+            # Add route-specific time effects if enough data
+            if len(df) > 5000 and df["dep_hour"].nunique() > 1:
+                base_formula += " + (dep_hour|route)"
 
         return base_formula
 

@@ -103,8 +103,9 @@ async def forecast(
             "alpha": result["alpha"],
             "beta": result["beta"],
             "updated": result["updated"],
-            # Hierarchical model info
+            # Model info
             "hierarchical_used": result.get("hierarchical_used", False),
+            "fast_model_used": result.get("fast_model_used", False),
             "update_time_ms": result.get("update_time_ms", 0.0),
             # Weather data
             "wx_temp_c": result.get("wx_temp_c"),

@@ -180,12 +180,25 @@ class OnlineHierarchicalUpdater:
             return self._conjugate_update(new_data)
 
     def _conjugate_update(self, new_data: pd.DataFrame) -> float:
-        """Fast conjugate Bayesian update with realistic route-specific priors."""
+        """Fast conjugate Bayesian update with realistic route-specific priors and weather."""
         # Get route characteristics for better priors
         carrier = new_data["carrier"].iloc[0]
         origin = new_data["origin"].iloc[0]
         dest = new_data["dest"].iloc[0]
         dep_hour = new_data["dep_hour"].iloc[0]
+
+        # Get weather data
+        wx_temp_c = (
+            new_data["wx_temp_c"].iloc[0] if "wx_temp_c" in new_data.columns else None
+        )
+        wx_wind_kt = (
+            new_data["wx_wind_kt"].iloc[0] if "wx_wind_kt" in new_data.columns else None
+        )
+        wx_precip_mm = (
+            new_data["wx_precip_mm"].iloc[0]
+            if "wx_precip_mm" in new_data.columns
+            else None
+        )
 
         # Use more realistic base priors based on route characteristics
         base_priors = {
@@ -236,7 +249,17 @@ class OnlineHierarchicalUpdater:
                 break
 
         # International routes have higher delays
-        international_airports = {"LHR", "CDG", "FRA", "NRT", "ICN", "ATH", "FCO"}
+        international_airports = {
+            "LHR",
+            "CDG",
+            "FRA",
+            "NRT",
+            "ICN",
+            "ATH",
+            "FCO",
+            "YYZ",
+            "YVR",
+        }
         if origin in international_airports or dest in international_airports:
             base_prob += 0.12
 
@@ -248,8 +271,49 @@ class OnlineHierarchicalUpdater:
         ):
             base_prob += 0.08
 
+        # ENHANCED WEATHER ADJUSTMENTS
+        weather_adjustment = 0.0
+
+        if wx_temp_c is not None:
+            # Temperature effects (more aggressive)
+            if wx_temp_c < 0:  # Freezing weather
+                weather_adjustment += 0.20
+            elif wx_temp_c < 5:  # Very cold weather
+                weather_adjustment += 0.12
+            elif wx_temp_c > 38:  # Extremely hot weather (>100°F)
+                weather_adjustment += 0.18
+            elif wx_temp_c > 32:  # Very hot weather (>90°F)
+                weather_adjustment += 0.10
+            elif wx_temp_c > 28:  # Hot weather (>82°F)
+                weather_adjustment += 0.05
+
+        if wx_wind_kt is not None:
+            # Wind effects (significant impact on delays)
+            if wx_wind_kt > 35:  # Very high winds
+                weather_adjustment += 0.25
+            elif wx_wind_kt > 25:  # High winds
+                weather_adjustment += 0.15
+            elif wx_wind_kt > 15:  # Moderate winds
+                weather_adjustment += 0.08
+            elif wx_wind_kt > 10:  # Light winds
+                weather_adjustment += 0.03
+
+        if wx_precip_mm is not None:
+            # Precipitation effects (major impact)
+            if wx_precip_mm > 15:  # Heavy precipitation
+                weather_adjustment += 0.30
+            elif wx_precip_mm > 8:  # Moderate-heavy precipitation
+                weather_adjustment += 0.20
+            elif wx_precip_mm > 3:  # Moderate precipitation
+                weather_adjustment += 0.12
+            elif wx_precip_mm > 1:  # Light precipitation
+                weather_adjustment += 0.06
+
+        # Apply weather adjustment to base probability
+        base_prob += weather_adjustment
+
         # Clamp to reasonable bounds
-        base_prob = max(0.08, min(0.75, base_prob))
+        base_prob = max(0.08, min(0.85, base_prob))
 
         # Convert to Beta parameters with moderate confidence
         pseudo_n = 30  # Equivalent to 30 flights of data
@@ -265,6 +329,12 @@ class OnlineHierarchicalUpdater:
 
         # Updated probability
         updated_prob = alpha / (alpha + beta)
+
+        # Log weather impact if significant
+        if weather_adjustment > 0.05:
+            print(
+                f"   🌤️  Weather impact: +{weather_adjustment:.1%} (temp: {wx_temp_c}°C, wind: {wx_wind_kt}kt, precip: {wx_precip_mm}mm)"
+            )
 
         # Convert back to intercept and cache
         updated_intercept = np.log(updated_prob / (1 - updated_prob))

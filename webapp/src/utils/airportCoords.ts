@@ -128,3 +128,46 @@ export const AIRPORT_LOOKUP: Record<string, { lat: number; lng: number }> = {
   ANC: { lat: 61.1744, lng: -149.996 }, // Anchorage
   HNL: { lat: 21.3099, lng: -157.8581 }, // Honolulu
 } 
+
+// Fallback airport coordinates when external API fails
+export const AIRPORT_COORDINATES: Record<string, [number, number]> = {
+  // Major US airports
+  "ATL": [33.6367, -84.4281],   // Atlanta
+  "LAX": [33.9425, -118.4081],  // Los Angeles
+  "ORD": [41.9786, -87.9048],   // Chicago O'Hare
+  "DFW": [32.8968, -97.0380],   // Dallas/Fort Worth
+  "DEN": [39.8561, -104.6737],  // Denver
+  "JFK": [40.6413, -73.7781],   // New York JFK
+  "SFO": [37.6213, -122.3790],  // San Francisco
+  "LAS": [36.0840, -115.1537],  // Las Vegas
+  "SEA": [47.4502, -122.3088],  // Seattle
+  "CLT": [35.2144, -80.9473],   // Charlotte
+  "MIA": [25.7959, -80.2870],   // Miami
+  "PHX": [33.4343, -112.0112],  // Phoenix
+  "IAH": [29.9902, -95.3368],   // Houston
+  "MCO": [28.4312, -81.3081],   // Orlando
+  "EWR": [40.6895, -74.1745],   // Newark
+  "MSP": [44.8848, -93.2223],   // Minneapolis
+  "BOS": [42.3656, -71.0096],   // Boston
+  "DTW": [42.2162, -83.3554],   // Detroit
+  "PHL": [39.8744, -75.2424],   // Philadelphia
+  "LGA": [40.7769, -73.8740],   // LaGuardia
+  "DCA": [38.8512, -77.0402],   // Washington DC
+  "IAD": [38.9531, -77.4565],   // Washington Dulles
+  "BWI": [39.1754, -76.6683],   // Baltimore
+  "MDW": [41.7868, -87.7522],   // Chicago Midway
+  "SLC": [40.7899, -111.9791],  // Salt Lake City
+  "PDX": [45.5898, -122.5951],  // Portland
+  "SAN": [32.7338, -117.1933],  // San Diego
+  "TPA": [27.9755, -82.5332],   // Tampa
+  "STL": [38.7487, -90.3700],   // St. Louis
+  "CVG": [39.0488, -84.6678],   // Cincinnati
+  "RSW": [26.5362, -81.7552],   // Southwest Florida (the failing one!)
+  "FLL": [26.0742, -80.1506],   // Fort Lauderdale
+  "PBI": [26.6832, -80.0956],   // West Palm Beach
+};
+
+export function getAirportCoordinates(airportCode: string): [number, number] | null {
+  const coords = AIRPORT_COORDINATES[airportCode.toUpperCase()];
+  return coords || null;
+} 

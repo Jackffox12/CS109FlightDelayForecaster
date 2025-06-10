@@ -6,7 +6,7 @@ from pathlib import Path
 
 import duckdb
 
-DEFAULT_DB_PATH = Path("data/flights.duckdb")
+DEFAULT_DB_PATH = Path("data/flights_expanded.duckdb")
 
 
 def _query_counts(
